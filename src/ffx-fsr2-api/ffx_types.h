@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 
-#if defined (FFX_GCC)
+#if defined (FFX_GCC) || defined (ANDROID)
 /// FidelityFX exported functions
 #define FFX_API
 #else

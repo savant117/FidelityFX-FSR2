@@ -28,6 +28,11 @@
 #include <stdlib.h>
 #include <codecvt>
 
+#ifdef ANDROID
+#include <locale>
+#define wcscpy_s wcscpy
+#endif
+
 // prototypes for functions in the interface
 FfxErrorCode GetDeviceCapabilitiesVK(FfxFsr2Interface* backendInterface, FfxDeviceCapabilities* deviceCapabilities, FfxDevice device);
 FfxErrorCode CreateBackendContextVK(FfxFsr2Interface* backendInterface, FfxDevice device);
@@ -514,6 +519,10 @@ VkDescriptorBufferInfo accquireDynamicUBO(BackendContext_VK* backendContext, uin
 
 static uint32_t getDefaultSubgroupSize(const BackendContext_VK* backendContext)
 {
+    //TODO hack for now
+#ifdef ANDROID
+    return 32;
+#else
     VkPhysicalDeviceVulkan11Properties vulkan11Properties = {};
     vulkan11Properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES;
 
@@ -524,6 +533,7 @@ static uint32_t getDefaultSubgroupSize(const BackendContext_VK* backendContext)
     FFX_ASSERT(vulkan11Properties.subgroupSize == 32 || vulkan11Properties.subgroupSize == 64); // current desktop market
 
     return vulkan11Properties.subgroupSize;
+#endif
 }
 
 // Create a FfxFsr2Device from a VkDevice
@@ -729,6 +739,11 @@ FfxErrorCode GetDeviceCapabilitiesVK(FfxFsr2Interface* backendInterface, FfxDevi
     {
         if (strcmp(backendContext->extensionProperties[i].extensionName, VK_EXT_SUBGROUP_SIZE_CONTROL_EXTENSION_NAME) == 0)
         {
+            //TODO hack for now
+#ifdef ANDROID
+            deviceCapabilities->waveLaneCountMin = 32;
+            deviceCapabilities->waveLaneCountMax = 32;
+#else
             // check if we the max subgroup size allows us to use wave64
             VkPhysicalDeviceSubgroupSizeControlProperties subgroupSizeControlProperties = {};
             subgroupSizeControlProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES;
@@ -746,6 +761,7 @@ FfxErrorCode GetDeviceCapabilitiesVK(FfxFsr2Interface* backendInterface, FfxDevi
                 deviceCapabilities->waveLaneCountMin = subgroupSizeControlProperties.minSubgroupSize;
                 deviceCapabilities->waveLaneCountMax = subgroupSizeControlProperties.maxSubgroupSize;
             }
+#endif
         }
         if (strcmp(backendContext->extensionProperties[i].extensionName, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME) == 0)
         {
@@ -757,9 +773,13 @@ FfxErrorCode GetDeviceCapabilitiesVK(FfxFsr2Interface* backendInterface, FfxDevi
             physicalDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
             physicalDeviceFeatures2.pNext = &shaderFloat18Int8Features;
 
+#ifdef ANDROID
+            deviceCapabilities->fp16Supported = false;
+#else
             vkGetPhysicalDeviceFeatures2(backendContext->physicalDevice, &physicalDeviceFeatures2);
 
             deviceCapabilities->fp16Supported = (bool)shaderFloat18Int8Features.shaderFloat16;
+#endif
         }
         if (strcmp(backendContext->extensionProperties[i].extensionName, VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME) == 0)
         {
@@ -771,9 +791,13 @@ FfxErrorCode GetDeviceCapabilitiesVK(FfxFsr2Interface* backendInterface, FfxDevi
             physicalDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
             physicalDeviceFeatures2.pNext = &accelerationStructureFeatures;
 
+#ifdef ANDROID
+            deviceCapabilities->raytracingSupported = false;
+#else
             vkGetPhysicalDeviceFeatures2(backendContext->physicalDevice, &physicalDeviceFeatures2);
 
             deviceCapabilities->raytracingSupported = (bool)accelerationStructureFeatures.accelerationStructure;
+#endif
         }
     }
 

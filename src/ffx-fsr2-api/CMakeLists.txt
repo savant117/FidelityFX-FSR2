@@ -42,7 +42,11 @@ if(CMAKE_GENERATOR_PLATFORM STREQUAL "x64" OR CMAKE_EXE_LINKER_FLAGS STREQUAL "/
 elseif(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32" OR CMAKE_EXE_LINKER_FLAGS STREQUAL "/machine:X86")
     set(FSR2_PLATFORM_NAME x86)
 else()
-    message(FATAL_ERROR "Unsupported target platform - only supporting x64 and Win32 currently")
+    set(FSR2_PLATFORM_NAME aarch64)
+    add_definitions(-DANDROID)
+    #TODO this is a hack
+#else()
+#    message(FATAL_ERROR "Unsupported target platform")
 endif()
 
 # Embed PDBs in the debug versions of the libs

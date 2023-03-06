@@ -134,7 +134,7 @@ FfxErrorCode ffxFsr2GetInterfaceDX12(
 void TIF(HRESULT result)
 {
     if (FAILED(result)) {
-
+#ifndef UWP
         wchar_t errorMessage[256];
         memset(errorMessage, 0, 256);
         FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, result, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), errorMessage, 255, NULL);
@@ -142,7 +142,8 @@ void TIF(HRESULT result)
         size_t returnSize;
         wcstombs_s(&returnSize, errA, 255, errorMessage, 255);
 #ifdef _DEBUG
-        int32_t msgboxID = MessageBoxW(NULL, errorMessage, L"Error", MB_OK);
+        int32_t msgboxID = MessageBox(NULL, errorMessage, L"Error", MB_OK);
+#endif
 #endif
         throw 1;
     }
